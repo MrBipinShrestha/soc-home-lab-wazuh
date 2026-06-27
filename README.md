@@ -1,4 +1,11 @@
-# SOC Home Lab: Wazuh SIEM
+# 🛡️ SOC Home Lab: Wazuh SIEM
+
+**SIEM Administration • Incident Response • Detection Engineering • MITRE ATT&CK**
+
+![Wazuh](https://img.shields.io/badge/Wazuh-v4.14.5-blue?style=for-the-badge)
+![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-red?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
 
 A complete Security Operations Center (SOC) home lab demonstrating SIEM administration, attack simulation, incident response, and detection engineering using Wazuh.
 
@@ -259,24 +266,19 @@ This isn't a failure — it's an insight.
 
 ---
 
-## 💼 For Recruiters & Hiring Managers
+## 💼 What This Shows Employers
 
-This repository demonstrates:
+This repository demonstrates practical skills employers actually need:
 
-✅ **Practical SOC Operations** — Real SIEM administration and monitoring  
-✅ **Incident Response Maturity** — Professional documentation and analysis  
-✅ **Detection Engineering** — Understanding both strengths and gaps  
-✅ **Threat Intelligence** — MITRE ATT&CK framework application  
-✅ **Compliance Knowledge** — NIST, PCI-DSS, HIPAA, GDPR understanding  
-✅ **Problem-Solving** — Identification of issues and concrete remediation  
-✅ **Both Offense & Defense** — Understanding attacker and defender perspectives  
+• **SIEM administration** — Wazuh deployment, configuration, agent management
+• **Incident response** — Professional documentation, timeline analysis, remediation
+• **Detection engineering** — Rule tuning, alert correlation, gap identification
+• **Log analysis** — Windows and Linux log interpretation
+• **MITRE ATT&CK** — Framework application to real attacks
+• **Security analysis** — Both what works AND why detection fails
+• **Compliance** — NIST 800-53, PCI-DSS, HIPAA mapping
 
-**Ideal for roles:**
-- SOC Analyst (Tier 1-2)
-- Detection Engineer
-- Security Operations Analyst
-- Threat Detection Engineer
-- Junior SIEM Administrator
+**Best for:** SOC Analyst, Detection Engineer, Security Operations Analyst, Junior Blue Team roles
 
 ---
 
@@ -296,11 +298,35 @@ This repository demonstrates:
 
 ---
 
+## 🚀 Future Enhancements
+
+Planned improvements:
+- [ ] Sysmon deployment for enhanced Windows process monitoring
+- [ ] Sigma rule conversion for SIEM portability
+- [ ] YARA malware detection rules
+- [ ] Suricata IDS/IPS integration
+- [ ] Velociraptor endpoint forensics
+- [ ] Automated response playbooks
+- [ ] Additional attack scenarios (lateral movement, privilege abuse, data theft)
+
+---
+
+## 📸 Lab Screenshots
+
+Real evidence from attack execution (see `screenshots/` folder):
+- Sensitive data creation and staging
+- Archive compression for exfiltration
+- System activity logs during attacks
+- Wazuh detection alerts (Rule 2833, 5760, 5405)
+- Agent status and dashboard
+
+---
+
 ## ✨ Highlights
 
-**What Makes This Lab Valuable:**
+What makes this lab valuable:
 
-1. **Real attacks, not simulations** — Actual attack tools and techniques
+1. **Real attacks, not simulations** — Actual tools (Hydra, PowerShell, cron)
 2. **Professional documentation** — Incident reports suitable for compliance
 3. **Honest about gaps** — Showing what *didn't* work is more valuable than hiding it
 4. **Actionable remediation** — Not just identifying problems, but solving them
