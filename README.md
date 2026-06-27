@@ -2,31 +2,24 @@
 
 ![Wazuh](https://img.shields.io/badge/Wazuh-v4.14.5-blue?style=for-the-badge)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-red?style=for-the-badge)
-![Security Focus](https://img.shields.io/badge/Focus-Detection_Engineering-purple?style=for-the-badge)
+![Focus](https://img.shields.io/badge/Focus-Detection_Engineering-purple?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
 
-> **Enterprise-grade SOC simulation environment focused on detection engineering, adversary emulation, and SIEM rule development using Wazuh.**
+> **Enterprise-grade SOC simulation environment focused on detection engineering, adversary emulation, and SIEM rule validation using Wazuh.**
 >
-> This lab replicates real-world attacker behavior, validates detection coverage, and identifies telemetry gaps in endpoint + network visibility.
+> This lab replicates real-world attacker behavior, validates detection coverage, and documents telemetry gaps with root cause analysis.
 
 ---
 
-## 🧠 Security Engineering Objective
-
-This project is designed to answer a real SOC question:
+## 🧠 Engineering Objective
 
 > "Can we reliably detect attacker behavior across identity, endpoint, and persistence layers using SIEM telemetry alone?"
 
-To validate this, I built an end-to-end attack simulation environment and measured:
-
-- Detection coverage
-- Rule effectiveness
-- Logging gaps
-- MITRE ATT&CK mapping accuracy
+To answer this, I built an end-to-end attack simulation pipeline and measured detection coverage across 5 attack scenarios.
 
 ---
 
-## 🏗️ SOC Architecture
+## 🏗️ Lab Architecture
 
 ```
                 ┌──────────────────────────────┐
@@ -39,61 +32,63 @@ To validate this, I built an end-to-end attack simulation environment and measur
                                │
     ┌──────────────────────────┼──────────────────────────┐
     │                          │                          │
-┌───▼────────────┐     ┌───────▼───────────┐     ┌───────▼───────────┐
-│ Windows 10     │     │ Kali Linux        │     │ Linux Endpoint    │
-│ Target Endpoint│     │ Attacker + Agent  │     │ Persistence Host  │
-│ Event Logs     │     │ Hydra / Simulation│     │ Cron / File Mods  │
-└────────────────┘     └───────────────────┘     └───────────────────┘
+┌───▼────────────┐     ┌───────▼───────────┐     ┌───────▼────────┐
+│ Windows 10     │     │ Kali Linux        │     │ Linux Target   │
+│ Target         │     │ Attacker + Agent  │     │ Persistence    │
+│ Event Logs     │     │ Hydra / Bash      │     │ Cron / Files   │
+└────────────────┘     └───────────────────┘     └────────────────┘
 ```
 
 ---
 
-## 🚨 Detection Engineering Outcomes
+## 🚨 Detection Engineering Results
 
-### Attack Simulation Coverage
+| # | Attack | MITRE | Source Log | Rule | Result |
+|---|--------|-------|-----------|------|--------|
+| 1 | SSH Brute Force | T1110.001 | /var/log/auth.log | 5760 | ✅ Level 10 alert |
+| 2 | Sudo Escalation | T1548.004 | /var/log/auth.log | 5405 | ✅ Level 5 alert |
+| 3 | Windows Scheduled Task | T1053.005 | Security EventLog | — | ❌ GAP-001 |
+| 4 | Data Exfiltration Staging | T1041 | FIM (syscheck) | — | ❌ GAP-002 |
+| 5 | Cron Persistence | T1053.006 | /var/log/syslog | 2833 | ✅ Level 8 alert |
 
-| # | Attack Scenario | MITRE Technique | Detection Status | Outcome |
-|---|----------------|-----------------|-----------------|---------|
-| 1 | SSH Brute Force | T1110.001 | ✅ Detected | High-confidence alert |
-| 2 | Privilege Escalation (sudo abuse) | T1548.004 | ✅ Detected | Rule-based detection |
-| 3 | Windows Persistence (Scheduled Task) | T1053.005 | ❌ Missed | Logging gap identified |
-| 4 | Data Exfiltration (staging) | T1041 / T1560 | ❌ Missed | FIM coverage issue |
-| 5 | Cron-based Persistence | T1053.006 | ✅ Detected | Behavioral match |
-
-### 📊 Detection Coverage Score: **60%**
+**Coverage: 3/5 (60%) | Gaps documented: 2/2 | Fixes applied: 2/2**
 
 ---
 
-## 🔍 Detection Engineering Insights
+## 🔍 Detection Specs (Primary Content)
 
-### 🟢 Successfully Detected Behaviors
+Each attack has a full detection specification:
 
-**SSH Brute Force (T1110.001)**
-- Correlated failed login attempts from single IP
-- Triggered Wazuh rule 5760
-- High-confidence brute force pattern detection
+| Spec | Attack | Status |
+|------|--------|--------|
+| [DET-001](phase2-attack-scenarios/01-ssh-brute-force/DET-001-ssh-brute-force.md) | SSH Brute Force | ✅ Validated |
+| [DET-002](phase2-attack-scenarios/02-privilege-escalation/incident-report.md) | Privilege Escalation | ✅ Validated |
+| [DET-003](phase2-attack-scenarios/03-malware-persistence/incident-report.md) | Malware Persistence | ❌ Gap documented |
+| [DET-004](phase2-attack-scenarios/04-data-exfiltration/incident-report.md) | Data Exfiltration | ❌ Gap documented |
+| [DET-005](phase2-attack-scenarios/05-persistence-cron/DET-005-cron-persistence.md) | Cron Persistence | ✅ Validated |
 
-**Privilege Escalation Attempt (T1548.004)**
-- Detection of unauthorized sudo execution
-- Matched user privilege boundary violation
-- Triggered Wazuh rule 5405
-
-**Cron Persistence (T1053.006)**
-- File integrity monitoring detected crontab modifications
-- Real-time alerting enabled via rule 2833
-- <5 second detection latency
+Each spec contains:
+- Telemetry source (exact log file)
+- Detection condition (rule logic)
+- Raw log evidence (real output)
+- Wazuh alert JSON
+- Failure cases
+- Remediation
 
 ---
 
-### 🔴 Detection Gaps Identified
+## ❌ Detection Gaps
 
-**1. Windows Scheduled Task Abuse (T1053.005)**
+### GAP-001: Windows Scheduled Task (T1053.005)
 
-Issue: No telemetry from Event ID 4698
+```
+Attack:    Register-ScheduledTask "WindowsUpdate" -Trigger AtStartup
+Expected:  Windows Security Event ID 4698
+Received:  Nothing — EventChannel not configured
+Root cause: ossec.conf missing Security channel subscription
+```
 
-Root Cause: Missing Windows EventChannel ingestion
-
-Fix:
+**Fix:**
 ```xml
 <localfile>
   <location>Security</location>
@@ -102,74 +97,60 @@ Fix:
 </localfile>
 ```
 
-**2. Data Exfiltration Simulation (T1041)**
+→ Full analysis: [gap-analysis/DETECTION-GAP-ANALYSIS.md](phase2-attack-scenarios/gap-analysis/DETECTION-GAP-ANALYSIS.md)
 
-Issue: File staging activity not detected
+---
 
-Root Cause: Insufficient File Integrity Monitoring scope
+### GAP-002: Data Exfiltration Staging (T1041)
 
-Fix:
+```
+Attack:    cp sensitive_files /tmp/exfil/ && tar -czf backup.tar.gz *
+Expected:  FIM alert on /tmp file creation
+Received:  Nothing — /tmp excluded from syscheck
+Root cause: Default FIM does not monitor /tmp or /home
+```
+
+**Fix:**
 ```xml
 <syscheck>
-  <directories check_all="yes">/tmp</directories>
-  <directories check_all="yes">/home</directories>
-  <directories check_all="yes">/root</directories>
+  <directories check_all="yes" realtime="yes">/tmp</directories>
+  <directories check_all="yes" realtime="yes">/home</directories>
 </syscheck>
 ```
 
----
-
-## 📊 MITRE ATT&CK Coverage
-
-| Tactic | Technique | Detection Scenario |
-|--------|----------|--------------------|
-| Credential Access | T1110.001 | SSH brute force |
-| Privilege Escalation | T1548.004 | sudo abuse detection |
-| Persistence | T1053.005 | Windows scheduled task |
-| Persistence | T1053.006 | Cron job modification |
-| Collection | T1005 | Data staging |
-| Exfiltration | T1041 | Archive creation |
-| Defense Evasion | T1036 | Hidden file execution |
+→ Full analysis: [gap-analysis/DETECTION-GAP-ANALYSIS.md](phase2-attack-scenarios/gap-analysis/DETECTION-GAP-ANALYSIS.md)
 
 ---
 
-## 🧪 Repository Structure
+## 📋 SIEM Query Library
 
-```
-soc-home-lab-wazuh/
-├── phase2-attack-scenarios/
-│   ├── 01-ssh-brute-force/
-│   │   └── incident-report.md
-│   ├── 02-privilege-escalation/
-│   │   └── incident-report.md
-│   ├── 03-malware-persistence/
-│   │   └── incident-report.md
-│   ├── 04-data-exfiltration/
-│   │   └── incident-report.md
-│   └── 05-persistence-cron/
-│       └── incident-report.md
-├── screenshots/
-│   ├── 07-wazuh-cron-detection.png
-│   ├── 06-cron-jobs-added.png
-│   ├── 05-backdoor-script-created.png
-│   ├── 03-archive-created.png
-│   └── 01-sensitive-files-created.png
-└── lab-setup/
-```
+Detection queries mapped to MITRE ATT&CK:
+
+→ [detection-specs/SIEM-QUERY-LIBRARY.md](phase2-attack-scenarios/detection-specs/SIEM-QUERY-LIBRARY.md)
+
+| Query | Use Case | Status |
+|-------|----------|--------|
+| QRY-001 | SSH Brute Force | ✅ Validated |
+| QRY-002 | Sudo Escalation | ✅ Validated |
+| QRY-003 | Cron Modification | ✅ Validated |
+| QRY-004 | Win Scheduled Task | ❌ Gap (fix documented) |
+| QRY-005 | File Staging /tmp | ❌ Gap (fix documented) |
+| QRY-006 | Hidden Directory | 🔄 Written, pending test |
+| QRY-007 | PowerShell Evasion | 🔄 Written, pending test |
 
 ---
 
-## 📸 Evidence (SOC Validation Artifacts)
+## 📸 Evidence
 
-All detections backed by:
+Real screenshots from lab execution in `screenshots/`:
 
-- Real-time Wazuh alert logs
-- SIEM dashboard screenshots
-- Attack execution traces
-- Rule firing validation
-- MITRE ATT&CK mapping evidence
-
-Screenshots in `screenshots/` folder — real evidence from live lab execution.
+| File | Content |
+|------|---------|
+| 07-wazuh-cron-detection.png | Rule 2833 firing — both cron jobs detected |
+| 06-cron-jobs-added.png | @reboot + */5 cron persistence verified |
+| 05-backdoor-script-created.png | Malicious script + hidden directory |
+| 03-archive-created.png | backup_2026_06_27.tar.gz staged |
+| 01-sensitive-files-created.png | AWS keys, PII, DB credentials created |
 
 ---
 
@@ -178,41 +159,43 @@ Screenshots in `screenshots/` folder — real evidence from live lab execution.
 | Tool | Role |
 |------|------|
 | Wazuh v4.14.5 | SIEM Core |
-| Ubuntu 22.04 | SIEM Manager Host |
+| Ubuntu 22.04 | SIEM Manager |
 | Windows 10 Enterprise | Target Endpoint |
 | Kali Linux | Attack Simulation + Agent |
-| Hydra | Credential Attack Simulation |
-| PowerShell | Windows Persistence Simulation |
-| Cron / Bash | Linux Persistence Simulation |
-| VirtualBox | Isolated SOC Environment |
+| Hydra | Credential Attack |
+| PowerShell | Windows Persistence |
+| Cron / Bash | Linux Persistence |
+| VirtualBox | Isolated Lab |
 
 ---
 
-## 📈 Engineering Outcomes
+## 📊 MITRE ATT&CK Coverage
 
-This lab demonstrates:
-
-- End-to-end SOC workflow: **Attack → Detection → Investigation → Gap Analysis**
-- Detection engineering mindset (not just log monitoring)
-- SIEM rule tuning and validation
-- MITRE ATT&CK-based visibility mapping
-- Real-world SOC gap identification and remediation
+| Tactic | Technique | Coverage |
+|--------|-----------|---------|
+| Credential Access | T1110.001 | ✅ Detected |
+| Privilege Escalation | T1548.004 | ✅ Detected |
+| Persistence | T1053.006 | ✅ Detected |
+| Persistence | T1053.005 | ❌ Gap |
+| Collection | T1005 | ❌ Gap |
+| Exfiltration | T1041 | ❌ Gap |
+| Defense Evasion | T1036 | ⚠️ Partial |
 
 ---
 
 ## 🔮 Roadmap
 
-- [ ] Sysmon integration (process-level telemetry)
-- [ ] Sigma rule conversion for portable detections
-- [ ] Suricata IDS integration (network visibility)
-- [ ] YARA-based malware detection rules
-- [ ] Automated incident response playbooks
-- [ ] Velociraptor endpoint forensics integration
+- [ ] Retest GAP-001 and GAP-002 after fixes
+- [ ] Sysmon deployment (process-level Windows telemetry)
+- [ ] Sigma rule conversion for portability
+- [ ] Suricata IDS integration (network-level detection)
+- [ ] YARA malware detection rules
+- [ ] Automated response playbooks
 
 ---
 
 ## 📬 Contact
 
 **GitHub:** [github.com/MrBipinShrestha](https://github.com/MrBipinShrestha)  
-**LinkedIn:** [linkedin.com/in/bipinshrestha](https://www.linkedin.com/in/bipinshrestha)  
+**LinkedIn:** [linkedin.com/in/shresthabipin](https://www.linkedin.com/in/shresthabipin)  
 **Location:** Sydney, Australia
